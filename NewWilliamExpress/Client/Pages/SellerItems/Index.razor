@@ -1,0 +1,121 @@
+﻿@page "/selleritems"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+@inject HttpInterceptorService _interceptor
+@implements IDisposable
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3 class="card-title"> Manager your items</h3>
+<br />
+
+
+<div class="row">
+    <div class="col-md-5">
+        <Search OnSearchChanged="SearchChanged" />
+    </div>
+    <div class="col-md-5">
+        @*Place for sort*@
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <ProductTable Items="ItemList" />
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <Pagination MetaData="MetaData" Spread="2" SelectedPage="SelectedPage" />
+    </div>
+</div>
+
+@code {
+    @using BlazorProducts.Client.Components.SellerProductTable
+
+    private List<AppUser> AppUsers;
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+
+    private string _currentUserId;
+    private string _currentUserName;
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        _interceptor.MonitorEvent();
+        var pagingResponse = await ItemRepo.GetItems(_itemParameters);
+        ItemList = pagingResponse.Items;
+        MetaData = pagingResponse.MetaData;
+
+        //var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        //var user = authState.User;
+
+        //if (user.Identity.IsAuthenticated)
+        //{
+        //    _claims = user.Claims;
+        //    //_currentUserName = user.Identity.Name;
+        //    if (_claims.Count() > 0)
+        //    {
+        //        foreach (var claim in _claims)
+        //        {
+        //            if (claim.Type == "sub")
+        //            {
+        //                _currentUserId = claim.Value;
+        //                continue;
+        //            }
+
+        //            if (claim.Type == "name")
+        //            {
+        //                _currentUserName = claim.Value;
+        //                continue;
+        //            }
+        //        }
+        //    }
+        //}
+
+        //_interceptor.MonitorEvent();
+        //ItemList = pagingResponse.Items;
+        //MetaData = pagingResponse.MetaData;
+    }
+
+    async Task Delete(int itemId)
+    {
+        await _client.DeleteAsync($"api/items/{itemId}");
+        await OnInitializedAsync();
+
+    }
+
+    public List<Item> ItemList { get; set; } = new List<Item>();
+    public MetaData MetaData { get; set; } = new MetaData();
+
+    private ItemParameters _itemParameters = new ItemParameters();
+
+    [Inject]
+    public IItemHttpRepository ItemRepo { get; set; }
+
+    private async Task SelectedPage(int page)
+    {
+        _itemParameters.PageNumber = page;
+        await GetItems();
+    }
+
+    private async Task GetItems()
+    {
+        _interceptor.MonitorEvent();
+        var pagingResponse = await ItemRepo.GetItems(_itemParameters);
+        ItemList = pagingResponse.Items;
+        MetaData = pagingResponse.MetaData;
+    }
+
+    private async Task SearchChanged(string searchTerm)
+    {
+        Console.WriteLine(searchTerm);
+        _itemParameters.PageNumber = 1;
+        _itemParameters.SearchTerm = searchTerm;
+        await GetItems();
+    }
+    public void Dispose()
+    {
+        _interceptor.DisposeEvent();
+    }
+}

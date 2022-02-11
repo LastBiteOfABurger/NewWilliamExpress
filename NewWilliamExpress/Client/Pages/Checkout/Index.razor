@@ -1,0 +1,138 @@
+﻿@page "/item/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+@inject IJSRuntime js
+@attribute [Authorize]
+@inject HttpInterceptorService _interceptor
+@implements IDisposable
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3 class="card-title"> Item Description</h3>
+<br />
+
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th> </th>
+            <th>Item name</th>
+            <th>Quantity</th>
+            <th>Wear</th>
+            <th>Price</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <img src="@item.Image" alt="product image" style="width:100px;" />
+            </td>
+            <td>@item.Itemname</td>
+            <td>@item.Quantity</td>
+            <td>@item.Wear</td>
+            <td>@item.Price</td>
+            <td>@item.Description</td>
+        </tr>
+    </tbody>
+</table>
+
+<EditForm Model="@order" OnValidSubmit="CreateOrder">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Your Address: </label>
+        <div>
+            <InputSelect @bind-Value="order.ShippingaddressId" class="form-control">
+                <option value=""> -- Select Your Shipping Address --</option>
+                @if (Shippingaddresses != null)
+                {
+                    foreach (var shippingaddress in Shippingaddresses)
+                    {
+                        if (shippingaddress.CreatedBy == _currentUserName)
+                        {
+                            <option value="@shippingaddress.Id">@shippingaddress.FirstName @shippingaddress.Address</option>
+                        }
+
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => order.ShippingaddressId)" />
+        </div>
+    </div>
+
+    <div>
+
+    </div>
+
+    <button type="submit" class="btn btn-success btn-block">
+        Checkout
+    </button>
+</EditForm>
+
+@*<button style=" background-color: #4CAF50; color: white; font-size: 24px; padding: 14px 40px; "@onclick="@(()=>CreateOrder())">Add to Cart</button>*@
+
+@code {
+    [Parameter] public int id { get; set; }
+    Item item = new Item();
+    Order order = new Order();
+
+    private List<AppUser> AppUsers;
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+
+    private string _currentUserId;
+    private string _currentUserName;
+
+    private List<Shippingaddress> Shippingaddresses;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        item = await _client.GetFromJsonAsync<Item>($"{Endpoints.ItemsEndpoint}/{id}");
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        AppUsers = await _client.GetFromJsonAsync<List<AppUser>>($"api/accounts");
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            _claims = user.Claims;
+            //_currentUserName = user.Identity.Name;
+            if (_claims.Count() > 0)
+            {
+                foreach (var claim in _claims)
+                {
+                    if (claim.Type == "sub")
+                    {
+                        _currentUserId = claim.Value;
+                        continue;
+                    }
+
+                    if (claim.Type == "name")
+                    {
+                        _currentUserName = claim.Value;
+                        continue;
+                    }
+                }
+            }
+        }
+        Shippingaddresses = await _client.GetFromJsonAsync<List<Shippingaddress>>($"{Endpoints.ShippingaddressesEndpoint}");
+    }
+
+    private async Task CreateOrder()
+    {
+        order.ItemId = item.Id;
+        order.TotalPrice = item.Price;
+        await _client.PostAsJsonAsync(Endpoints.OrdersEndpoint, order);
+        _navManager.NavigateTo("/");
+    }
+
+
+    public void Dispose()
+    {
+        _interceptor.DisposeEvent();
+    }
+}

@@ -1,0 +1,84 @@
+﻿@inject HttpClient _client
+@inject IJSRuntime js
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@if (Items.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">Name</th>
+                <th scope="col">Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                if (item.CreatedBy == _currentUserName)
+                {
+                    <tr>
+                        <td>
+                            <img src="@item.Image" alt="product image" style="width:100px;" />
+                        </td>
+                        <td class="align-middle">
+                            @item.Itemname
+                        </td>
+                        <td class="align-middle">
+                            $@item.Price
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <span>
+        Loading products...
+    </span>
+}
+
+@code{
+    @namespace BlazorProducts.Client.Components.SellerProductTable
+    [Parameter]
+
+    public List<Item> Items { get; set; }
+
+    private List<AppUser> AppUsers;
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+
+    private string _currentUserId;
+    private string _currentUserName;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            _claims = user.Claims;
+            //_currentUserName = user.Identity.Name;
+            if (_claims.Count() > 0)
+            {
+                foreach (var claim in _claims)
+                {
+                    if (claim.Type == "sub")
+                    {
+                        _currentUserId = claim.Value;
+                        continue;
+                    }
+
+                    if (claim.Type == "name")
+                    {
+                        _currentUserName = claim.Value;
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+}

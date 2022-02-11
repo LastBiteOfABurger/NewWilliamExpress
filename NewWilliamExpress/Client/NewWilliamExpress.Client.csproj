@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Pages\CreateOrder\**" />
+    <Compile Remove="Pages\meme\**" />
+    <Content Remove="Pages\CreateOrder\**" />
+    <Content Remove="Pages\meme\**" />
+    <EmbeddedResource Remove="Pages\CreateOrder\**" />
+    <EmbeddedResource Remove="Pages\meme\**" />
+    <None Remove="Pages\CreateOrder\**" />
+    <None Remove="Pages\meme\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Components\SamplePageContentComponent.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Pages\ShippingAddress\Edit.razor" />
+    <None Include="Pages\ShippingAddress\FormComponent.razor" />
+    <None Include="Pages\ShippingAddress\Index.razor" />
+    <None Include="Pages\ShippingAddress\View.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.12" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="5.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+    <PackageReference Include="Toolbelt.Blazor.HttpClientInterceptor" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\NewWilliamExpress.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+</Project>

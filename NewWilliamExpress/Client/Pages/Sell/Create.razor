@@ -1,0 +1,149 @@
+﻿@page "/sell"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+@inject HttpInterceptorService _interceptor
+@implements IDisposable
+
+<h3 Class="card-title">Sell a item</h3>
+<hr />
+<br />
+
+<EditForm Model="@item" OnValidSubmit="CreateItem">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Name: </label>
+        <div>
+            <InputText @bind-Value="@item.Itemname" class="form-control" />
+            <ValidationMessage For="@(() => item.Itemname)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Quantity: </label>
+        <div>
+            <InputNumber @bind-Value="@item.Quantity" class="form-control" />
+            <ValidationMessage For="@(() => item.Quantity)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Wear: </label>
+        <div>
+            <InputText @bind-Value="@item.Wear" class="form-control" />
+            <ValidationMessage For="@(() => item.Wear)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Price: </label>
+        <div>
+            <InputNumber @bind-Value="@item.Price" class="form-control" />
+            <ValidationMessage For="@(() => item.Price)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Description: </label>
+        <div>
+            <InputText @bind-Value="@item.Description" class="form-control" />
+            <ValidationMessage For="@(() => item.Description)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="image" class="col-md-2 col-form-label">Image:</label>
+        <div class="col-md-10">
+            <ImageUpload OnChange="AssignImageUrl" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Brand: </label>
+        <div>
+            <InputSelect @bind-Value="item.BrandId" class="form-control">
+                <option value=""> -- Select Brand --</option>
+                @if (Brands != null)
+                {
+                    foreach (var brand in Brands)
+                    {
+                        <option value="@brand.Id">@brand.Name</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => item.BrandId)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Item Type: </label>
+        <div>
+            <InputSelect @bind-Value="item.ItemtypeId" class="form-control">
+                <option value=""> -- Select Item Type --</option>
+                @if (Itemtypes != null)
+                {
+                    foreach (var itemtype in Itemtypes)
+                    {
+                        <option value="@itemtype.Id">@itemtype.Name</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => item.ItemtypeId)" />
+        </div>
+    </div>
+
+    @*<div class="form-group">
+        <label>Your Name: </label>
+        <div>
+            <InputSelect @bind-Value="item.CustomerId" class="form-control">
+                <option value=""> -- Select Your Name --</option>
+                @if (Customers != null)
+                {
+                    foreach (var customer in Customers)
+                    {
+                        <option value="@customer.Id">@customer.Username</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => item.CustomerId)" />
+        </div>
+    </div>*@
+
+    <div>
+
+    </div>
+
+    <button type="submit" class="btn btn-success btn-block">
+        Create Item
+    </button>
+</EditForm>
+
+
+@code {
+    Item item = new Item();
+
+    private IList<Brand> Brands;
+    private IList<Itemtype> Itemtypes;
+    private IList<Customer> Customers;
+
+    protected async override Task OnInitializedAsync()
+    {
+        _interceptor.MonitorEvent();
+        Brands = await _client.GetFromJsonAsync<List<Brand>>($"{Endpoints.BrandsEndpoint}");
+        Itemtypes = await _client.GetFromJsonAsync<List<Itemtype>>($"{Endpoints.ItemtypesEndpoint}");
+        Customers = await _client.GetFromJsonAsync<List<Customer>>($"{Endpoints.CustomersEndpoint}");
+    }
+
+    private async Task CreateItem()
+    {
+        await _client.PostAsJsonAsync(Endpoints.ItemsEndpoint, item);
+        _navManager.NavigateTo("/mains");
+    }
+    public void Dispose()
+    {
+        _interceptor.DisposeEvent();
+    }
+    private void AssignImageUrl(string Image) => item.Image = Image;
+
+}

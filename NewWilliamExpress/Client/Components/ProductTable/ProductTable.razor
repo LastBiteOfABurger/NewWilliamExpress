@@ -1,0 +1,54 @@
+﻿@inject HttpClient _client
+@inject IJSRuntime js
+
+<head>
+    <style>
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex-direction: row;
+        }
+.card {
+    flex:0 1 30%;
+/*    padding: 0 10px;*/
+}
+    </style>
+</head>
+<body>
+    @if (Items.Count > 0)
+    {
+
+        @foreach (var item in Items)
+        {
+            <div class="cards">
+                <div class="card">
+                    <a style="text-decoration: none; color: #000000" href="/item/@item.Id">
+                        <h3>
+                            <img src="@item.Image" alt="product image" style="width:100px;" />
+                        </h3>
+                        <p>
+                            @item.Itemname
+                        </p>
+                        <p>
+                            $@item.Price
+                        </p>
+                    </a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <span>
+            Loading products...
+        </span>
+    }
+</body>
+@code{
+    @namespace BlazorProducts.Client.Components.ProductTable
+    [Parameter]
+
+    public List<Item> Items { get; set; }
+
+}

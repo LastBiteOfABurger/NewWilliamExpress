@@ -1,0 +1,17 @@
+﻿@page "/shippingaddress/view/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+
+<h3>View</h3>
+
+<FormComponent shippingaddress="shippingaddress" Disabled="true" />
+
+@code {
+    [Parameter] public int id { get; set; }
+    Shippingaddress shippingaddress = new Shippingaddress();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        shippingaddress = await _client.GetFromJsonAsync<Shippingaddress>($"{Endpoints.ShippingaddressesEndpoint}/{id}");
+    }
+}

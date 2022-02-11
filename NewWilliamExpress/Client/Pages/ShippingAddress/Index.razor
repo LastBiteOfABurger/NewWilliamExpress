@@ -1,0 +1,115 @@
+﻿@page "/shippingAddress"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+@inject HttpInterceptorService _interceptor
+@implements IDisposable
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3 class="card-title">ShippingAddresses</h3>
+
+<br />
+<a href="/shippingaddress/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Shipping Address
+</a>
+<br />
+<br />
+
+@if (ShippingAddresses == null)
+{
+    <div class="alert alert-info"> Loading ShippingAddresses</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var shippingAddress in ShippingAddresses)
+            {
+                if (shippingAddress.CreatedBy == _currentUserName)
+                {
+                    <tr>
+                        <td>@shippingAddress.Address</td>
+                        <td>
+                            <a href="/shippingaddress/view/@shippingAddress.Id" class="btn btn-primary">
+                                <span class="oi oi-book"></span>
+                            </a>
+                            <a href="/shippingaddress/edit/@shippingAddress.Id" class="btn btn-warning">
+                                <span class=" =oi oi-pencil"></span>
+                            </a>
+                            <button class="btn btn-danger" @onclick="@(()=>Delete(shippingAddress.Id))">
+                                <span class="oi oi-delete"></span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+}
+@code {
+    private List<Shippingaddress> ShippingAddresses;
+
+    private List<AppUser> AppUsers;
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+
+    private string _currentUserId;
+    private string _currentUserName;
+
+    protected async override Task OnInitializedAsync()
+    {
+        AppUsers = await _client.GetFromJsonAsync<List<AppUser>>($"api/accounts");
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            _claims = user.Claims;
+            //_currentUserName = user.Identity.Name;
+            if (_claims.Count() > 0)
+            {
+                foreach (var claim in _claims)
+                {
+                    if (claim.Type == "sub")
+                    {
+                        _currentUserId = claim.Value;
+                        continue;
+                    }
+
+                    if (claim.Type == "name")
+                    {
+                        _currentUserName = claim.Value;
+                        continue;
+                    }
+                }
+            }
+        }
+        _interceptor.MonitorEvent();
+        ShippingAddresses = await _client.GetFromJsonAsync<List<Shippingaddress>>("api/shippingAddresses");
+    }
+
+    async Task Delete(int customerId)
+    {
+        var shippingAddress = ShippingAddresses.First(q => q.Id == customerId);
+        var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {shippingAddress.Address}?");
+        if (confirm)
+        {
+            await _client.DeleteAsync($"api/shippingAddresses/{customerId}");
+            await OnInitializedAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        _interceptor.DisposeEvent();
+    }
+}
